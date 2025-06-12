@@ -165,7 +165,10 @@ jobs:
             target/surefire-reports/
             build/test-results/
 
-      - name: Summarize test results
-        if: always()
-        run: |
-          echo "✅ Tests completed. Check logs above for pass/fail summary."
+      - name: 📊 Summarize test results
+        if: always()
+        run: |
+          echo "✅ Tests completed.
+          echo "### Test Summary" >> $GITHUB_STEP_SUMMARY 
+          grep -E "Tests run:|Failures:|Errors:" target/surefire-reports/*.txt >> $GITHUB_STEP_SUMMARY || echo "No summary found"
+
