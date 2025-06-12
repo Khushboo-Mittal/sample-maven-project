@@ -156,51 +156,22 @@ jobs:
             gradle test || { echo "❌ Gradle tests failed"; exit 1; }
           fi
 
-      - name: 📊 Append test results to GitHub summary
+      - name: Append test results to GitHub summary
         if: always()
         run: |
           echo "### 🧪 JUnit Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo "|------------|-------|--------|----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
           echo "| Test Class | Total | Passed | Failures | Errors | Skipped |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|-------|--------|----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+
           for file in target/surefire-reports/*.xml; do
             if [[ -f "$file" ]]; then
-
               class=$(basename "$file" .xml)
-              tests=$(grep -oP 'tests="\\K[0-9]+' "$file" || echo 0)
-              failures=$(grep -oP 'failures="\\K[0-9]+' "$file" || echo 0)
-              errors=$(grep -oP 'errors="\\K[0-9]+' "$file" || echo 0)
-              skipped=$(grep -oP 'skipped="\\K[0-9]+' "$file" || echo 0)
+              tests=$(grep -oP 'tests="\K[0-9]+' "$file")
+              failures=$(grep -oP 'failures="\K[0-9]+' "$file")
+              errors=$(grep -oP 'errors="\K[0-9]+' "$file")
+              skipped=$(grep -oP 'skipped="\K[0-9]+' "$file")
               passed=$((tests - failures - errors - skipped))
               echo "| $class | $tests | $passed | $failures | $errors | $skipped |" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📋 Detailed Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Test Class | Test Name | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|------------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-
-          for file in target/surefire-reports/*.xml; do
-            if [[ -f "$file" ]]; then
-              class=$(basename "$file" .xml)
-              while IFS= read -r line; do
-                name=$(echo "$line" | grep -oP 'name="\\K[^"]+' || echo "")
-                classname=$(echo "$line" | grep -oP 'classname="\\K[^"]+' || echo "$class")
-                if echo "$line" | grep -q "<failure"; then
-                  status="Failed"
-                elif echo "$line" | grep -q "<error"; then
-                  status="Error"
-                elif echo "$line" | grep -q "<skipped"; then
-                  status="Skipped"
-                elif [[ -n "$name" ]]; then
-                  status="Passed"
-                else
-                  continue
-                fi
-                if [[ -n "$name" ]]; then
-                  echo "| $classname | $name | $status |" >> $GITHUB_STEP_SUMMARY
-                fi
-              done < <(grep "<testcase" "$file")
             fi
           done
 
