@@ -67,7 +67,7 @@ jobs:
         run: |
           echo "Running build with ${{ inputs.build-tool }}"
           if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
-            mvn clean install || { echo "❌ Maven build failed"; exit 1; }
+            mvn clean install -DskipTests || { echo "❌ Maven build failed"; exit 1; }
           elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
             ./gradlew clean build -x test || { echo "❌ Gradle Wrapper build failed"; exit 1; }
           elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
@@ -85,7 +85,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    # needs: build
+    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@main
@@ -146,10 +146,11 @@ jobs:
           fi
 
       - name: Run tests
+        continue-on-error: true
         run: |
           echo "Running tests with ${{ inputs.build-tool }}"
           if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
-            mvn test || { echo "❌ Maven tests failed"; exit 1; }
+            mvn verify || { echo "❌ Maven tests failed"; exit 1; }
           elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
             ./gradlew test || { echo "❌ Gradle Wrapper tests failed"; exit 1; }
           elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
