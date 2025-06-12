@@ -156,6 +156,25 @@ jobs:
             gradle test || { echo "❌ Gradle tests failed"; exit 1; }
           fi
 
+      - name: 📊 Append test results to GitHub summary
+        if: always()
+        run: |
+          echo "### 🧪 JUnit Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Class | Total | Passed | Failures | Errors | Skipped |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|-------|--------|----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+
+          for file in target/surefire-reports/*.xml; do
+            if [[ -f "$file" ]]; then
+              class=$(basename "$file" .xml)
+              tests=$(grep -oP 'tests="\K[0-9]+' "$file")
+              failures=$(grep -oP 'failures="\K[0-9]+' "$file")
+              errors=$(grep -oP 'errors="\K[0-9]+' "$file")
+              skipped=$(grep -oP 'skipped="\K[0-9]+' "$file")
+              passed=$((tests - failures - errors - skipped))
+              echo "| $class | $tests | $passed | $failures | $errors | $skipped |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@main
