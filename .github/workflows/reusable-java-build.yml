@@ -1,0 +1,171 @@
+name: Reusable Java Build Workflow
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to use (e.g., 8, 11, 17)'
+        required: false
+        default: '17'
+        type: string
+      build-tool:
+        description: 'Build tool to use: maven, gradle, or gradle-wrapper'
+        required: false
+        default: 'maven'
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      build-tool: ${{ inputs.build-tool }}
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@main
+
+      - name: ✅ Validate build tool input
+        run: |
+          echo "Validating build tool: ${{ inputs.build-tool }}"
+          if [[ "${{ inputs.build-tool }}" != "maven" && "${{ inputs.build-tool }}" != "gradle" && "${{ inputs.build-tool }}" != "gradle-wrapper" ]]; then
+            echo "❌ Unsupported build tool: ${{ inputs.build-tool }}"
+            exit 1
+          fi
+
+      - name: ☕ Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@main
+        with:
+          distribution: 'temurin'
+          java-version: ${{ inputs.java-version }}
+
+      - name: 💾 Cache dependencies
+        uses: actions/cache@main
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-${{ inputs.build-tool }}-${{ hashFiles('**/*.gradle*', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ inputs.build-tool }}-
+
+      - name: 🔍 Verify build tool installation
+        run: |
+          echo "Verifying installation of ${{ inputs.build-tool }}"
+          if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
+            mvn -v || { echo "❌ Maven is not installed or not in PATH"; exit 1; }
+          elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
+            if [[ ! -f "./gradlew" ]]; then
+              echo "❌ Gradle Wrapper script not found in the project root"
+              exit 1
+            fi
+            ./gradlew --version || { echo "❌ Gradle Wrapper is not working"; exit 1; }
+          elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
+            gradle -v || { echo "❌ Gradle is not installed or not in PATH"; exit 1; }
+          fi
+
+      - name: 🛠️ Build project
+        run: |
+          echo "Running build with ${{ inputs.build-tool }}"
+          if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
+            mvn clean install || { echo "❌ Maven build failed"; exit 1; }
+          elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
+            ./gradlew clean build -x test || { echo "❌ Gradle Wrapper build failed"; exit 1; }
+          elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
+            gradle clean build -x test || { echo "❌ Gradle build failed"; exit 1; }
+          fi
+
+      - name: 📤 Upload JAR artifacts
+        if: success()
+        uses: actions/upload-artifact@main
+        with:
+          name: java-artifacts
+          path: |
+            target/*.jar
+            build/libs/*.jar
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@main
+
+      - name: ☕ Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@main
+        with:
+          distribution: 'temurin'
+          java-version: ${{ inputs.java-version }}
+
+      - name: 💾 Restore cached dependencies
+        uses: actions/cache@main
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-${{ inputs.build-tool }}-${{ hashFiles('**/*.gradle*', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ inputs.build-tool }}-
+
+      - name: 🔍 Verify build tool installation
+        run: |
+          echo "Verifying installation of ${{ inputs.build-tool }}"
+          if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
+            mvn -v || { echo "❌ Maven is not installed or not in PATH"; exit 1; }
+          elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
+            if [[ ! -f "./gradlew" ]]; then
+              echo "❌ Gradle Wrapper script not found in the project root"
+              exit 1
+            fi
+            ./gradlew --version || { echo "❌ Gradle Wrapper is not working"; exit 1; }
+          elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
+            gradle -v || { echo "❌ Gradle is not installed or not in PATH"; exit 1; }
+          fi
+
+      - name: 🧹 Run Checkstyle (Linting)
+        run: |
+          echo "Running Checkstyle..."
+          if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
+            if [[ -f "checkstyle.xml" ]]; then
+              mvn checkstyle:check || { echo "❌ Checkstyle violations found"; exit 1; }
+            else
+              echo "⚠️ checkstyle.xml not found. Skipping Checkstyle."
+            fi
+          elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
+            if [[ -f "checkstyle.xml" ]]; then
+              ./gradlew checkstyleMain || { echo "❌ Checkstyle violations found"; exit 1; }
+            else
+              echo "⚠️ checkstyle.xml not found. Skipping Checkstyle."
+            fi
+          elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
+            if [[ -f "checkstyle.xml" ]]; then
+              gradle checkstyleMain || { echo "❌ Checkstyle violations found"; exit 1; }
+            else
+              echo "⚠️ checkstyle.xml not found. Skipping Checkstyle."
+            fi
+          fi
+
+      - name: 🧪 Run tests
+        run: |
+          echo "Running tests with ${{ inputs.build-tool }}"
+          if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
+            mvn test || { echo "❌ Maven tests failed"; exit 1; }
+          elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
+            ./gradlew test || { echo "❌ Gradle Wrapper tests failed"; exit 1; }
+          elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
+            gradle test || { echo "❌ Gradle tests failed"; exit 1; }
+          fi
+
+      - name: 📤 Upload test reports
+        if: always()
+        uses: actions/upload-artifact@main
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            build/test-results/
+
+      - name: 📊 Summarize test results
+        if: always()
+        run: |
+          echo "✅ Tests completed. Check logs above for pass/fail summary."
