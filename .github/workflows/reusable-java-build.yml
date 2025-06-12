@@ -174,7 +174,7 @@ jobs:
               echo "| $class | $tests | $passed | $failures | $errors | $skipped |" >> $GITHUB_STEP_SUMMARY
             fi
           done
-          
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@main
@@ -187,4 +187,6 @@ jobs:
       - name: Summarize test results
         if: always()
         run: |
-          echo "✅ Tests completed. Check logs above for pass/fail summary."
+          echo "✅ Tests completed."
+          echo "Check the 'Summary' tab for a test overview."
+          echo "Check the 'Artifacts' section below for detailed test reports."
