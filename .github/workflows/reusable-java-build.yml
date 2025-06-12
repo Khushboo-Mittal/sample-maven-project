@@ -20,10 +20,10 @@ jobs:
     outputs:
       build-tool: ${{ inputs.build-tool }}
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@main
 
-      - name: ✅ Validate build tool input
+      - name: Validate build tool input
         run: |
           echo "Validating build tool: ${{ inputs.build-tool }}"
           if [[ "${{ inputs.build-tool }}" != "maven" && "${{ inputs.build-tool }}" != "gradle" && "${{ inputs.build-tool }}" != "gradle-wrapper" ]]; then
@@ -31,13 +31,13 @@ jobs:
             exit 1
           fi
 
-      - name: ☕ Set up Java ${{ inputs.java-version }}
+      - name: Set up Java ${{ inputs.java-version }}
         uses: actions/setup-java@main
         with:
           distribution: 'temurin'
           java-version: ${{ inputs.java-version }}
 
-      - name: 💾 Cache dependencies
+      - name: Cache dependencies
         uses: actions/cache@main
         with:
           path: |
@@ -48,7 +48,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ inputs.build-tool }}-
 
-      - name: 🔍 Verify build tool installation
+      - name: Verify build tool installation
         run: |
           echo "Verifying installation of ${{ inputs.build-tool }}"
           if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
@@ -63,7 +63,7 @@ jobs:
             gradle -v || { echo "❌ Gradle is not installed or not in PATH"; exit 1; }
           fi
 
-      - name: 🛠️ Build project
+      - name: Build project
         run: |
           echo "Running build with ${{ inputs.build-tool }}"
           if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
@@ -74,7 +74,7 @@ jobs:
             gradle clean build -x test || { echo "❌ Gradle build failed"; exit 1; }
           fi
 
-      - name: 📤 Upload JAR artifacts
+      - name: Upload JAR artifacts
         if: success()
         uses: actions/upload-artifact@main
         with:
@@ -87,16 +87,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@main
 
-      - name: ☕ Set up Java ${{ inputs.java-version }}
+      - name: Set up Java ${{ inputs.java-version }}
         uses: actions/setup-java@main
         with:
           distribution: 'temurin'
           java-version: ${{ inputs.java-version }}
 
-      - name: 💾 Restore cached dependencies
+      - name: Restore cached dependencies
         uses: actions/cache@main
         with:
           path: |
@@ -107,7 +107,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ inputs.build-tool }}-
 
-      - name: 🔍 Verify build tool installation
+      - name: Verify build tool installation
         run: |
           echo "Verifying installation of ${{ inputs.build-tool }}"
           if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
@@ -122,7 +122,7 @@ jobs:
             gradle -v || { echo "❌ Gradle is not installed or not in PATH"; exit 1; }
           fi
 
-      - name: 🧹 Run Checkstyle (Linting)
+      - name: Run Checkstyle (Linting)
         run: |
           echo "Running Checkstyle..."
           if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
@@ -145,7 +145,7 @@ jobs:
             fi
           fi
 
-      - name: 🧪 Run tests
+      - name: Run tests
         run: |
           echo "Running tests with ${{ inputs.build-tool }}"
           if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
@@ -156,7 +156,7 @@ jobs:
             gradle test || { echo "❌ Gradle tests failed"; exit 1; }
           fi
 
-      - name: 📤 Upload test reports
+      - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@main
         with:
@@ -165,7 +165,7 @@ jobs:
             target/surefire-reports/
             build/test-results/
 
-      - name: 📊 Summarize test results
+      - name: Summarize test results
         if: always()
         run: |
           echo "✅ Tests completed. Check logs above for pass/fail summary."
