@@ -169,7 +169,7 @@ jobs:
           else
             report_dir="build/test-results/test"
           fi
-      
+
           for file in $report_dir/*.xml; do
             if [[ -f "$file" ]]; then
              class=$(basename "$file" .xml)
@@ -190,7 +190,9 @@ jobs:
           name: test-reports
           path: |
             target/surefire-reports/
-            build/test-results/
+            build/test-results/test/
+            build/reports/tests/test/
+
 
       - name: Summarize test results
         if: always()
