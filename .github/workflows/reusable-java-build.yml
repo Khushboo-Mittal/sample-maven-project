@@ -164,17 +164,24 @@ jobs:
           echo "| Test Class | Total | Passed | Failures | Errors | Skipped |" >> $GITHUB_STEP_SUMMARY
           echo "|------------|-------|--------|----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
 
-          for file in target/surefire-reports/*.xml; do
+          if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
+            report_dir="target/surefire-reports"
+          else
+            report_dir="build/test-results/test"
+          fi
+      
+          for file in $report_dir/*.xml; do
             if [[ -f "$file" ]]; then
-              class=$(basename "$file" .xml)
-              tests=$(grep -oP 'tests="\K[0-9]+' "$file")
-              failures=$(grep -oP 'failures="\K[0-9]+' "$file")
-              errors=$(grep -oP 'errors="\K[0-9]+' "$file")
-              skipped=$(grep -oP 'skipped="\K[0-9]+' "$file")
-              passed=$((tests - failures - errors - skipped))
+             class=$(basename "$file" .xml)
+             tests=$(grep -oP 'tests="\K[0-9]+' "$file")
+             failures=$(grep -oP 'failures="\K[0-9]+' "$file")
+             errors=$(grep -oP 'errors="\K[0-9]+' "$file")
+             skipped=$(grep -oP 'skipped="\K[0-9]+' "$file")
+             passed=$((tests - failures - errors - skipped))
               echo "| $class | $tests | $passed | $failures | $errors | $skipped |" >> $GITHUB_STEP_SUMMARY
             fi
           done
+
 
       - name: Upload test reports
         if: always()
