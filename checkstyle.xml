@@ -5,14 +5,16 @@
 
 <module name="Checker">
     <module name="TreeWalker">
-        <module name="LineLength">
-            <property name="max" value="120"/>
-        </module>
         <module name="WhitespaceAfter"/>
         <module name="WhitespaceAround"/>
         <module name="NeedBraces"/>
         <module name="EmptyBlock"/>
         <module name="FinalLocalVariable"/>
         <module name="EqualsHashCode"/>
-   </module>
+    </module>
+
+    <!-- LineLength must be outside TreeWalker -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+    </module>
 </module>
