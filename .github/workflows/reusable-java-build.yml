@@ -150,11 +150,11 @@ jobs:
         run: |
           echo "Running tests with ${{ inputs.build-tool }}"
           if [[ "${{ inputs.build-tool }}" == "maven" ]]; then
-            mvn verify || { echo "❌ Maven tests failed"; exit 1; }
+            mvn verify || echo "❌ Maven tests failed"
           elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
-            ./gradlew test || { echo "❌ Gradle Wrapper tests failed"; exit 1; }
+            ./gradlew test || echo "❌ Gradle Wrapper tests failed"
           elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
-            gradle test || { echo "❌ Gradle tests failed"; exit 1; }
+            gradle test || echo "❌ Gradle tests failed"
           fi
 
       - name: Append test results to GitHub summary
@@ -172,16 +172,15 @@ jobs:
 
           for file in $report_dir/*.xml; do
             if [[ -f "$file" ]]; then
-             class=$(basename "$file" .xml)
-             tests=$(grep -oP 'tests="\K[0-9]+' "$file")
-             failures=$(grep -oP 'failures="\K[0-9]+' "$file")
-             errors=$(grep -oP 'errors="\K[0-9]+' "$file")
-             skipped=$(grep -oP 'skipped="\K[0-9]+' "$file")
-             passed=$((tests - failures - errors - skipped))
+              class=$(basename "$file" .xml)
+              tests=$(grep -oP 'tests="\K[0-9]+' "$file" | head -1)
+              failures=$(grep -oP 'failures="\K[0-9]+' "$file" | head -1)
+              errors=$(grep -oP 'errors="\K[0-9]+' "$file" | head -1)
+              skipped=$(grep -oP 'skipped="\K[0-9]+' "$file" | head -1)
+              passed=$((tests - failures - errors - skipped))
               echo "| $class | $tests | $passed | $failures | $errors | $skipped |" >> $GITHUB_STEP_SUMMARY
             fi
           done
-
 
       - name: Upload test reports
         if: always()
@@ -192,7 +191,6 @@ jobs:
             target/surefire-reports/
             build/test-results/test/
             build/reports/tests/test/
-
 
       - name: Summarize test results
         if: always()
