@@ -132,13 +132,13 @@ jobs:
               echo "⚠️ checkstyle.xml not found. Skipping Checkstyle."
             fi
           elif [[ "${{ inputs.build-tool }}" == "gradle-wrapper" ]]; then
-            if [[ -f "checkstyle.xml" ]]; then
+            if [[ -f "config/checkstyle/checkstyle.xml" ]]; then
               ./gradlew checkstyleMain || { echo "❌ Checkstyle violations found"; exit 1; }
             else
               echo "⚠️ checkstyle.xml not found. Skipping Checkstyle."
             fi
           elif [[ "${{ inputs.build-tool }}" == "gradle" ]]; then
-            if [[ -f "checkstyle.xml" ]]; then
+            if [[ -f "config/checkstyle/checkstyle.xml" ]]; then
               gradle checkstyleMain || { echo "❌ Checkstyle violations found"; exit 1; }
             else
               echo "⚠️ checkstyle.xml not found. Skipping Checkstyle."
