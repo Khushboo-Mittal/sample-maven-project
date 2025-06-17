@@ -16,7 +16,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: isg-ocp-x86-small
     outputs:
       build-tool: ${{ inputs.build-tool }}
     steps:
@@ -84,7 +84,7 @@ jobs:
             build/libs/*.jar
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: isg-ocp-x86-small
     needs: build
     steps:
       - name: Checkout code
